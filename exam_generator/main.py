@@ -3,21 +3,21 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import os
 
-# 延迟导入大型库，提高启动速度
-# 这些函数将在需要时动态导入相应模块
+# 直接导入所有必要的模块
+from excel_reader import read_questions_from_excel, get_question_ids_range
+from word_generator import generate_exam_document
+
+# 保持原有函数名称以确保兼容性
 def read_questions_from_excel_lazy(file_path, start_id=None, end_id=None):
-    """延迟导入并调用read_questions_from_excel函数"""
-    from excel_reader import read_questions_from_excel
+    """调用read_questions_from_excel函数"""
     return read_questions_from_excel(file_path, start_id, end_id)
 
 def get_question_ids_range_lazy(file_path):
-    """延迟导入并调用get_question_ids_range函数"""
-    from excel_reader import get_question_ids_range
+    """调用get_question_ids_range函数"""
     return get_question_ids_range(file_path)
 
 def generate_exam_document_lazy(questions, output_file, title="考试试卷", shuffle_options=False):
-    """延迟导入并调用generate_exam_document函数"""
-    from word_generator import generate_exam_document
+    """调用generate_exam_document函数"""
     return generate_exam_document(questions, output_file, title, shuffle_options)
 
 
@@ -37,7 +37,7 @@ class ExamGeneratorApp:
         
         # 设置窗口图标
         try:
-            self.root.iconbitmap("logo2.ico")
+            self.root.iconbitmap("icon.ico")
         except Exception:
             # 如果图标设置失败，忽略错误，程序继续运行
             pass
@@ -264,8 +264,15 @@ class ExamGeneratorApp:
                 question.shuffle_options()
             
             # 准备题目行
-            question_header = f"{idx}. {question.title} (题型: {question.question_type}, 分值: {question.score}, 原题号: {idx})\n"
+            question_header = f"{idx}. {question.title} (题型: {question.question_type}, 分值: {question.score}, 原题号: {question.question_id})\n"
             preview_content.append(question_header)
+            
+            # 特殊处理阅读理解题型的文章显示
+            if question.question_type == '阅读理解' and question.reading_passage:
+                # 只在每组阅读理解的第一题显示文章
+                # 检查是否是该文章的第一题
+                if idx == 1 or self.questions[idx-2].reading_passage != question.reading_passage:
+                    preview_content.append(f"  【阅读理解文章】\n{question.reading_passage}\n")
             
             # 准备选项
             options = []
